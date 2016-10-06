@@ -37,8 +37,9 @@ class CurrentTimeNode(template.Node):
 		self.format_string = str(format_string)
 	def render(self, context):
 		now = datetime.datetime.now()
-		return now.strftime(self.format_string)
+		context['current_time'] = now.strftime(self.format_string)
 
+		return "" 
 #创建compilation函数用于获取模板中的参数并创建相应的Node类对象
 	#@register.tag(name='current_time')
 def do_current_time(parser, token):
@@ -47,7 +48,7 @@ def do_current_time(parser, token):
 	except ValueError:
 		msg = '%r tag requires a single argument' % token.split_contents()[0]
 		raise template.TemplateSyntaxError(msg)
-	return CurrentTimeNode(format_string)
+	return CurrentTimeNode(format_string[1:-1])
 	
 #注册tag
 register.tag('current_time', do_current_time)

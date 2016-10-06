@@ -40,15 +40,45 @@ class CurrentTimeNode(template.Node):
 		context['current_time'] = now.strftime(self.format_string)
 
 		return "" 
+class CurrentTimeNode2(template.Node):
+	def __init__(self, format_string, var_name):
+		self.format_string = str(format_string)
+		self.var_name = var_name
+	def render(self, context):
+		now = datetime.datetime.now()
+		context[self.var_name] = now.strftime(self.format_string)
+
+		return "" 
+
 #创建compilation函数用于获取模板中的参数并创建相应的Node类对象
 	#@register.tag(name='current_time')
+#def do_current_time(parser, token):
+#	try:
+#		tag_name, format_string = token.split_contents()
+#	except ValueError:
+#		msg = '%r tag requires a single argument' % token.split_contents()[0]
+#		raise template.TemplateSyntaxError(msg)
+#	return CurrentTimeNode(format_string[1:-1])
+	
+
 def do_current_time(parser, token):
 	try:
-		tag_name, format_string = token.split_contents()
+		tag_name, args = token.contents.split(None, 1)
 	except ValueError:
 		msg = '%r tag requires a single argument' % token.split_contents()[0]
 		raise template.TemplateSyntaxError(msg)
-	return CurrentTimeNode(format_string[1:-1])
-	
+	import re
+	m = re.search(r'(.*?) as (\w+)', args)
+	if m:
+		format_string, var_name = m.groups()
+	else:
+		msg = "%r tag has invalid arguments" % tag_name
+		raise template.TemplateSyntaxError(msg)
+	if not (format_string[0] == format_string[-1] and format_string[0] in ("'",'"')):
+		msg = "%r tag's argument should be in quotes" % tag_name
+		raise template.TemplateSyntaxError(msg)
+		
+	return CurrentTimeNode2(format_string[1:-1], var_name)
+
 #注册tag
 register.tag('current_time', do_current_time)

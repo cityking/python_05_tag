@@ -100,3 +100,30 @@ def get_current_time(format_string):
 	return datetime.datetime.now().strftime(str(format_string))
 #register.simple_tag(get_current_time)
 register.assignment_tag(get_current_time)
+
+
+#保留context
+def do_upper(parser, token):
+#	import pdb
+#	pdb.set_trace()	
+	nodelist = parser.parse(('endupper',))
+
+
+	parser.delete_first_token()
+	return UpperNode(nodelist)
+class UpperNode(template.Node):
+	def __init__(self, nodelist):
+		self.nodelist = nodelist
+	def render(self, context):
+		output = self.nodelist.render(context)
+		return output.upper()
+register.tag('upper', do_upper)
+
+
+
+#渲染模板
+from myTemplateLibrary.models import Book
+def book_for_author(author):
+	books = Book.objects.filter(author = author)
+	return {'books':books}
+register.inclusion_tag('mybook.html')(book_for_author)

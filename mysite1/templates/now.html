@@ -2,3 +2,8 @@
 
 {% get_current_time "%Y-%m-%d %I:%M %p" as my_current_time%}
  <p>current time is {{ my_current_time }}</p>
+ {% upper %}
+This will appear in uppercase
+ {% endupper %}
+
+ {% book_for_author '李白' %}

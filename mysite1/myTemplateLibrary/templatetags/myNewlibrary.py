@@ -79,6 +79,24 @@ def do_current_time(parser, token):
 		raise template.TemplateSyntaxError(msg)
 		
 	return CurrentTimeNode2(format_string[1:-1], var_name)
+def do_current_time2(parser, token):
+	try:
+		args = token.split_contents()
+		if len(args)==4 and args[-2] == 'as':
+			var_name = args[-1]
+			format_string = args[1]
+		elif len(args)!=2:
+			raise template.TemplateSyntaxError('Invalid arguments')
+	except ValueError:
+		msg = '%r tag requires a single argument' % token.split_contents()[0]
+		raise template.TemplateSyntaxError(msg)
+	
+	return CurrentTimeNode2(format_string[1:-1], var_name)
 
 #注册tag
-register.tag('current_time', do_current_time)
+register.tag('current_time', do_current_time2)
+
+def get_current_time(format_string):
+	return datetime.datetime.now().strftime(str(format_string))
+#register.simple_tag(get_current_time)
+register.assignment_tag(get_current_time)

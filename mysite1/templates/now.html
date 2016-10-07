@@ -1,4 +1,4 @@
 {% load myNewlibrary %}
 
-{% current_time "%Y-%M-%d %I:%M %p" as my_current_time %}
-<p>current time is {{ my_current_time }}</p>
+{% get_current_time "%Y-%m-%d %I:%M %p" as my_current_time%}
+ <p>current time is {{ my_current_time }}</p>

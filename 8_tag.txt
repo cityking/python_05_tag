@@ -1,0 +1,171 @@
+1.创建模版库
+	新建一个专门用于管理模版库的app manage startapp myTemplateLibrary
+	并在myTemplateLibrary目录下创建templatetags子目录，
+		并在子目录中新建两个文件__init__.py和tag/filter定义文件
+		__init__.py用来声明这是一个包
+		tag/filter定义文件 如myNewlibrary.py 在模板中这样引用{% load myNewlibrary %}
+2.实现自定义过滤器
+	创建全局变量register，用来注册你的自定义标签和过滤器
+		from django import template
+		register = template.Library()
+	定义过滤器函数
+		def remove(var, arg):
+        		#移除var中的arg字符串
+        		return var.replace(arg, '')
+
+		def lower(value):
+        		return value.lower()
+	注册过滤器函数
+		register.filter('remove', remove)
+		register.filter('lower', lower)
+	#使用装饰器
+		@register.filter(name='remove')
+		def remove(var, arg):
+        		#移除var中的arg字符串
+        		return var.replace(arg, '')
+
+		@register.filter
+		def lower(value):
+        		return value.lower()
+	自动转义
+		#自动转义1
+		@register.filter(is_safe=True)
+		def add(value, arg):
+        		return "%s %s" %(value,arg)
+
+		#自动转义2
+		from django.utils.safestring import mark_safe
+		@register.filter()
+		def add(value, arg):
+        		return mark_safe("%s %s" %(value, arg))
+	在模板中引用
+		{{ "hello world cityking world chenghai" | remove:"world"}}
+ 		{{ hello | lower}}
+ 		{% with "<h1>hello</h1>" as tempValue%}
+        		{{ tempValue | add:"world"}}
+ 		{% endwith %}
+
+3.实现自定义标签
+	定义Node节点类，实现render方法
+		import datetime
+		class CurrentTimeNode(template.Node):
+        		def __init__(self, format_string):
+                		self.format_string = str(format_string)
+        		def render(self, context):
+                		now = datetime.datetime.now()
+                		retrun now.strftime(self.format_string)
+
+ 		创建compilation函数用于获取模板中的参数并创建相应的Node类对象
+        		def do_current_time(parser, token):
+                		try:
+                        		tag_name, format_string = token.split_contents()
+                		except ValueError:
+                        		msg = '%r tag requires a single argument' % token.split_contents()[0]
+                        		raise template.TemplateSyntaxError(msg)
+                		return CurrentTimeNode(format_string)
+	注册tag
+		register.tag('current_time', do_current_time)或使用装饰器
+		
+
+4.在Node类的render函数中设置context
+	def render(self, context):
+                now = datetime.datetime.now()
+                context['current_time'] = now.strftime(self.format_string)
+                return ""
+	调用
+		{% load myNewlibrary %}
+		{% current_time "%Y-%M-%d %I:%M %p" %}
+		<p>current time is {{ current_time }}</p>
+	但这样做一个不好的地方就是，current_time变量名是硬编码，可能会覆盖相同名字的值
+	重新设置
+	class CurrentTimeNode2(template.Node):
+        	def __init__(self, format_string, var_name):
+                	self.format_string = str(format_string)
+                	self.var_name = var_name
+        	def render(self, context):
+                	now = datetime.datetime.now()
+                	context[self.var_name] = now.strftime(self.format_string)
+
+                	return ""
+
+	def do_current_time2(parser, token):
+        	try:
+                	args = token.split_contents()
+                	if len(args)==4 and args[-2] == 'as':
+                        	var_name = args[-1]
+                        	format_string = args[1]
+                	elif len(args)!=2:
+                        	raise template.TemplateSyntaxError('Invalid arguments')
+        	except ValueError:
+                	msg = '%r tag requires a single argument' % token.split_contents()[0]
+                	raise template.TemplateSyntaxError(msg)
+
+        	return CurrentTimeNode2(format_string[1:-1], var_name)
+
+
+
+5.实现块作用区域的tag
+	例如我们想要实现{% comment %}...{% endcomment %}，功能是忽略中tag中间的所有内容。
+	def do_comment(parser, token):
+    		nodelist = parser.parse(('endcomment',))
+    		parser.delete_first_token()
+    		return CommentNode()
+
+	class CommentNode(template.Node):
+    		def render(self, context):
+    			return ''
+
+6.在块作用tag中保留context内容
+	代码如下
+	{% upper %}
+	This will appear in uppercase, {{ user_name }}.
+	{% endupper %}
+	这里需要context中的user_name参数，怎么才能在处理tag的时候，不丢失context信息呢？
+	def do_upper(parser, token):
+    		nodelist = parser.parse(('endupper',))
+    		parser.delete_first_token()
+    		return UpperNode(nodelist)
+
+	class UpperNode(template.Node):
+    		def __init__(self, nodelist):
+        		self.nodelist = nodelist
+
+    		def render(self, context):
+        		output = self.nodelist.render(context)
+        		return output.upper()
+	只需要保留下nodelist，然后调用self.nodelist.render(contest)，就可以间接调用每一个Node的render函数。	
+
+7.快速创建简单tag的方法
+	def get_current_time(format_string):
+        	return datetime.datetime.now().strftime(str(format_string))
+	#register.simple_tag(get_current_time)
+	register.assignment_tag(get_current_time)
+
+8.创建Inclusion Tag（渲染模板）
+	from myTemplateLibrary.models import Book
+	def book_for_author(author):
+        	books = Book.objects.filter(author = author)
+        	return {'books':books}
+	register.inclusion_tag('mybook.html')(book_for_author)
+
+	mybook.html
+
+	<FONT face=Verdana>
+	<ul>
+	{% for book in books %}
+	<SPAN style="COLOR: #0000ff">
+	<li>{{ book.title }}</li>
+	</SPAN>
+	{% endfor %}
+	</ul>
+	</FONT>
+
+	在模板中引用 {% book_for_author '李白' %}
+
+
+
+更多内容 http://blog.sina.com.cn/s/blog_9e2e84050101j1oj.html
+	
+
+
+

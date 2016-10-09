@@ -1,0 +1,23 @@
+<h1>welcome jinja2</h1>
+
+<div>
+<h2>
+	{% for i in tempValue%}
+		{% if i==1 %}
+			{{i}}
+		{% endif %}
+	{% endfor %}
+<h2>
+</div>
+<div>
+<h2>
+	{{1+2}}
+	{{1/2}}
+	{{10/3}}
+	{{2**3}}
+	{% set tempInt=10 %}
+	{{ tempInt }}
+	{{ "abc" | capitalize | my_lower}}
+	{{ -1 | abs}}
+</h2>
+</div>

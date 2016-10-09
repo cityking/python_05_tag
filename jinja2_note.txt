@@ -1,0 +1,65 @@
+使用jinja2替换默认模板引擎
+
+在项目目录创建jinja2.py文件
+	from jinja2 import Environment
+
+	def environment(**options):
+        	env = Environment(**options)
+        	return env
+
+	如果报错 cannot import Environment
+	则在前面加上 from __future__ import absolute_import
+
+在settings.py文件里设置
+	TEMPLATES = [
+    		{
+			'BACKEND': 'django.template.backends.jinja2.Jinja2',
+        		'DIRS': [os.path.join(BASE_DIR,'templates')],
+        		'APP_DIRS': True,
+        		'OPTIONS': {
+                		'environment':'mysite1.jinja2.environment',
+
+        			},
+    		},
+	]
+自定义过滤器
+	修改jinja2.py文件
+	def lower(value):
+        	return value.lower()
+
+	def environment(**options):
+        	env = Environment(**options)
+        	env.filters['my_lower']=lower
+        	return env
+
+模版文件
+	<h1>welcome jinja2</h1>
+
+	<div>
+	<h2>
+        	{% for i in tempValue%}
+             	   {% if i==1 %}
+            	            {{i}}
+            	    {% endif %}
+       		 {% endfor %}
+	<h2>
+	</div>
+	<div>
+	<h2>
+        	{{1+2}}
+       	 	{{1/2}}
+       	 	{{10/3}}
+       		{{2**3}}
+        	{% set tempInt=10 %}
+        	{{ tempInt }}
+        	{{ "abc" | capitalize | my_lower}}
+        	{{ -1 | abs}}
+	</h2>
+	</div>
+
+
+	
+
+
+
+

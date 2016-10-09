@@ -17,6 +17,9 @@ from django.conf.urls import url
 from django.contrib import admin
 from myTemplateLibrary import views
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^hello/$', views.hello, name='hello')
+	url(r'^admin/', admin.site.urls),
+	url(r'^hello/$', views.hello, name='hello'),
+	url(r'^home/$', views.home, name='home'),
+
+
 ]

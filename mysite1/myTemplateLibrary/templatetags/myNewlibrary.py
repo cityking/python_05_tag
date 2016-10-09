@@ -1,5 +1,6 @@
 # coding: utf-8
 from django import template
+from django.template.defaultfilters import stringfilter
 
 #创建全局变量register，用来注册你的自定义标签和过滤器
 register = template.Library()
@@ -12,12 +13,12 @@ register = template.Library()
 #
 #def lower(value):
 #	return value.lower()
-
-
-#注册过滤器函数
-#register.filter('remove', remove)
+#
+#
+##注册过滤器函数
+#register.filter('myremove', remove)
 #register.filter('lower', lower)
-
+#
 
 #使用装饰器
 @register.filter(name='remove')
@@ -26,10 +27,20 @@ def remove(var, arg):
 	return var.replace(arg, '')
 
 @register.filter
+@stringfilter
 def lower(value):
 	return value.lower()
 
+#自动转义1
+@register.filter(is_safe=True)
+def add(value, arg):
+	return "%s %s" %(value,arg)
 
+#自动转义2
+from django.utils.safestring import mark_safe
+@register.filter()
+def add2(value, arg):
+	return mark_safe("%s %s" %(value, arg))
 #定义Node节点类，实现render方法
 import datetime
 class CurrentTimeNode(template.Node):

@@ -7,3 +7,9 @@ This will appear in uppercase
  {% endupper %}
 
  {% book_for_author '李白' %}
+
+ {{ "hello world cityking world chenghai" | remove:"world"}}
+ {{ hello | lower}}
+ {% with "<h1>hello</h1>" as tempValue%}
+ 	{{ tempValue | add2:"world"}}
+ {% endwith %}

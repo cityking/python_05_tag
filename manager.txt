@@ -1,0 +1,100 @@
+详解Python的Django框架中Manager方法的使用
+
+模块manager是一个对象，模块通过他查询数据库，模块默认的objects属性就是一个manager对象
+
+自定义模块
+	class ToDo(models.Model):
+        	content = models.CharField(max_length = 200)
+        	is_done = models.BooleanField(default = False)
+        	priority = models.IntegerField(default=1)
+
+        	def __str__(self):
+                	return "%s-%d" %(self.content, self.priority)
+在admin注册
+ 
+views.py
+	def todoList(request):
+        	return render(request, 'todo.html', {'showtype':'所有列表', 'todoList':ToDo.objects.all()})
+
+todo.html
+	<p>{{ showtype }}</p>
+	<div>
+        	{% for todoItem in todoList %}
+        	<p>     {{ todoItem.content }} {{ todoItem.is_done}} {{ todoItem.priority }} </p>
+
+        	{% endfor %}
+	</div>
+
+重命名manager
+	todolists = models.Manager()
+查询数据库的方法 ToDo.todolists.all()
+filter ToDo.todolists.all().filter(is_done=False)
+	ToDo.todolists.all().filter(is_done=False).filter(priority=1)
+
+自定义manager
+	class IncompleteTodoManager(models.Manager):
+        	def get_queryset(self):
+                	return super(IncompleteTodoManager, self).get_queryset().filter(is_done=False)
+	class ToDo(models.Model):
+		.......
+		objects = IncompleteTodoManager()
+
+在manager自定义方法
+	class TodoManager(models.Manager):
+        	def Incomplete(self):
+                	return self.filter(is_done=False)
+
+        	def high(self):
+                	return self.filter(priority=1)
+	class ToDo(models.Model):
+		.......
+		objects = TodoManager()
+	调用 ToDo.objects.Incomplete()
+		ToDo.objects.high()
+
+自定义结果集
+	class TodoQueryset(models.QuerySet):
+        	def Incomplete(self):
+                	return self.filter(is_done=False)
+
+        	def high(self):
+                	return self.filter(priority=1)
+
+	class NewTodoManager(models.Manager):
+        	def get_queryset(self):
+                	return TodoQueryset(self.model, using=self._db)
+
+	class ToDo(models.Model):
+		.......
+		objects = NewTodoManager()
+	另一种方式
+	class ToDo(models.Model):
+		.......
+		objects = TodoQueryset.as_manager()
+
+	调用 ToDo.objects.all().Incomplete() ToDo.objects.all().high()
+		ToDo.objects.all().Incomplete().high()
+
+
+	增加自定义方法
+	class NewTodoManager(models.Manager):
+        	def get_queryset(self):
+                	return TodoQueryset(self.model, using=self._db)
+		
+		def incomplete(self):
+			return self.get_queryset().Incomplete()
+
+		def high(self):
+                	return self.get_queryset().high()
+	调用 	ToDo.objects.incomplete().high()
+
+如果你使用自定义的Manager对象，请注意，Django遇到的第一个Manager
+(以它在模型中被定义的位置为准)会有一个特殊状态。
+ Django将会把第一个Manager 定义为默认Manager ，Django的许多部分(但是不包括admin应用)
+将会明确地为模型使用这个manager。 结论是，你应该小心地选择你的默认manager。
+因为覆盖get_query_set() 了，你可能接受到一个无用的返回对像，你必须避免这种情况。
+
+资料：http://www.jb51.net/article/69767.htm
+
+
+

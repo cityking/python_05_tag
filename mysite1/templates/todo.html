@@ -1,0 +1,7 @@
+<p>{{ showtype }}</p>
+<div>
+	{% for todoItem in todoList %}
+	<p>	{{ todoItem.content }} {{ todoItem.is_done}} {{ todoItem.priority }} </p>
+
+	{% endfor %}
+</div>

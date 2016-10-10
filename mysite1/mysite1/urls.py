@@ -19,7 +19,8 @@ from myTemplateLibrary import views
 urlpatterns = [
 	url(r'^admin/', admin.site.urls),
 	url(r'^hello/$', views.hello, name='hello'),
-	url(r'^home/$', views.home, name='home'),
+	url(r'^$', views.home, name='home'),
+	url(r'^todoList/$', views.todoList, name='todoList'),
 
 
 ]
